@@ -1,7 +1,10 @@
 # opencode-zshell
 
-Zsh helpers for [OpenCode](https://opencode.ai) 2.2.7+:
+Zsh helpers for [OpenCode](https://opencode.ai) 2.2.7+ and
+[FEFO](https://github.com/campanafernando/FEFO):
 
+- **`fefo`** — calls the `opencode-fefo` plugin to run FEFO workspace commands.
+- **`fefo-cli`** — calls the FEFO CLI directly when you do not need an OpenCode session.
 - **`cmg`** — suggests a Conventional Commit message from the staged, unstaged, merge, rebase, or cherry-pick diff. It never commits; it prints the `git commit` command.
 - **`doit`** — runs an arbitrary task through `opencode run`, in the current directory or a target directory.
 - **`bng`** — suggests a branch name from the current diff and creates/checks out the branch.
@@ -14,6 +17,7 @@ Zsh helpers for [OpenCode](https://opencode.ai) 2.2.7+:
 - python3
 - coreutils `timeout` (Linux/WSL). macOS: `brew install coreutils`; the script aliases `timeout` to `gtimeout`.
 - `node` is optional. `cmg`/`bng` use it to parse OpenCode JSON; without it they fall back to `sed`.
+- `opencode-fefo` plugin for the `fefo` helper. `fefo-cli` works without it.
 
 ## Install
 
@@ -36,6 +40,44 @@ exec zsh
 To keep the checkout somewhere else, export `OPENCODE_ZSHELL` before sourcing.
 
 ## Usage
+
+### `fefo` — FEFO through the OpenCode plugin
+
+```sh
+fefo status
+fefo add ../api --role api
+fefo index api web
+fefo doctor
+```
+
+By default `fefo` calls the `opencode-fefo` plugin through `opencode run`.
+The plugin is published at
+[`campanafernando/opencode-fefo`](https://github.com/campanafernando/opencode-fefo).
+Until the npm package is published, load the checkout directly:
+
+```jsonc
+{
+  "plugins": ["/absolute/path/to/opencode-fefo"]
+}
+```
+
+After npm publication:
+
+```sh
+opencode plugin add opencode-fefo
+```
+
+The plugin needs the FEFO CLI in the workspace (`bin/fefo`), on `PATH`, or at
+`FEFO_CLI`. The prompt asks the agent to call the `fefo_run` tool, so the
+operation uses the same plugin surface as an interactive OpenCode session.
+
+To bypass OpenCode and call the CLI directly:
+
+```sh
+FEFO_VIA=cli fefo status
+# or
+fefo-cli status
+```
 
 ### `cmg` — commit message
 
@@ -166,4 +208,4 @@ Install coreutils. On macOS, the script falls back to `gtimeout` when available.
 
 ## License
 
-No license is included yet. Add one before redistributing if needed.
+MIT. See [`LICENSE`](LICENSE).

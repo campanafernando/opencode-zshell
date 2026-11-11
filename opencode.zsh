@@ -9,6 +9,41 @@ if ! command -v timeout >/dev/null 2>&1 && command -v gtimeout >/dev/null 2>&1; 
   alias timeout=gtimeout
 fi
 
+# FEFO: call the OpenCode plugin by default; FEFO_VIA=cli bypasses it.
+_fefo_cli() {
+  local cli="${FEFO_CLI:-}"
+  if [[ -z "$cli" ]]; then
+    if [[ -x "$PWD/bin/fefo" ]]; then
+      cli="$PWD/bin/fefo"
+    elif command -v fefo >/dev/null 2>&1; then
+      cli="$(command -v fefo)"
+    elif [[ -x "$HOME/FEFO/bin/fefo" ]]; then
+      cli="$HOME/FEFO/bin/fefo"
+    fi
+  fi
+  if [[ -z "$cli" ]]; then
+    echo "fefo: FEFO CLI not found. Set FEFO_CLI or clone https://github.com/campanafernando/FEFO" >&2
+    return 1
+  fi
+  "$cli" "$@"
+}
+
+fefo() {
+  [[ $# -eq 0 ]] && set -- status
+  if [[ "${FEFO_VIA:-plugin}" == "cli" ]]; then
+    _fefo_cli "$@"
+    return
+  fi
+  local json_args
+  json_args=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1:]))' -- "$@") || return 1
+  opencode run --archived --title fefo \
+    "Call the fefo_run tool with args=${json_args}. Do not prepend '--' or 'fefo'. Return the tool output exactly, without commentary."
+}
+
+fefo-cli() {
+  _fefo_cli "$@"
+}
+
 # ---- Commit message generator ----
 # Re-sourcing guard: zsh expands aliases before function definitions.
 unalias cmg 2>/dev/null
