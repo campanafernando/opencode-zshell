@@ -1,5 +1,5 @@
 # OpenCode zsh helpers: cmg, doit, bng.
-# Requires OpenCode 2.2.7+. Source this file from ~/.zshrc.
+# Requires OpenCode 2.3.0+. Source this file from ~/.zshrc.
 #
 # Usage:
 #   source "${OPENCODE_ZSHELL:-$HOME/opencode-zshell}/opencode.zsh"
@@ -9,7 +9,9 @@ if ! command -v timeout >/dev/null 2>&1 && command -v gtimeout >/dev/null 2>&1; 
   alias timeout=gtimeout
 fi
 
-# FEFO: call the OpenCode plugin by default; FEFO_VIA=cli bypasses it.
+# FEFO: call the CLI directly (deterministic, no model, no tokens). FEFO_VIA=plugin
+# goes through `opencode run` and the opencode-fefo plugin instead; the plugin
+# refuses `init` and `mcp add`, which must be typed in a terminal.
 _fefo_cli() {
   local cli="${FEFO_CLI:-}"
   if [[ -z "$cli" ]]; then
@@ -30,7 +32,7 @@ _fefo_cli() {
 
 fefo() {
   [[ $# -eq 0 ]] && set -- status
-  if [[ "${FEFO_VIA:-plugin}" == "cli" ]]; then
+  if [[ "${FEFO_VIA:-cli}" != "plugin" ]]; then
     _fefo_cli "$@"
     return
   fi
@@ -325,7 +327,7 @@ doit() {
   doit_model=$(_opencode_pick_model "$doit_model")
   [[ -n "$doit_model" ]] || doit_model="opencode/big-pickle"
   local doit_dir="$PWD"
-  local doit_skip_permissions="${DOIT_SKIP_PERMISSIONS:-1}"
+  local doit_skip_permissions="${DOIT_SKIP_PERMISSIONS:-0}"
   local doit_interactive=0
   local user_request="" doit_prompt="" doit_context="" doit_status=0
   local -a doit_args
@@ -377,8 +379,10 @@ Usage: doit [options] "task"
 Run an arbitrary task through opencode using a free Zen text model by default.
 
 Options:
-  --ask, --safe          Use normal opencode permission prompts.
-  --allow, --auto-allow  Auto-approve permissions. Default.
+  --ask, --safe          Use normal opencode permission prompts. Default.
+  --allow, --auto-allow  Auto-approve every permission that is not denied. Rules that
+                         only "ask" (git commit/push/merge/rebase/reset --hard) are
+                         approved too; only "deny" rules still block.
   -C, --dir DIR          Run opencode from DIR instead of the current directory.
   -m, --model MODEL      Override model. Default: cached free Zen text model.
   -i, --interactive      Open the TUI with the task instead of a scripted run.
@@ -386,7 +390,7 @@ Options:
 
 Environment:
   DOIT_MODEL             Default model override.
-  DOIT_SKIP_PERMISSIONS  Set to 0 to make --ask the default.
+  DOIT_SKIP_PERMISSIONS  Set to 1 to make --allow the default.
 
 Examples:
   doit "move markdown file to repo ~/projects/repo/docs/analysis"
@@ -443,7 +447,7 @@ EOF
 
   echo "doit: opencode model=$doit_model dir=$doit_dir"
   if [[ "$doit_skip_permissions" != "0" ]]; then
-    echo "doit: auto-allow enabled; use --ask to review permissions"
+    echo "doit: auto-allow enabled: git commit/push/reset --hard rules that only ask are approved too; use --ask to review"
   fi
 
   if [[ "$doit_interactive" == "1" ]]; then
