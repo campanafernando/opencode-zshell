@@ -162,7 +162,7 @@ ${XDG_CACHE_HOME:-$HOME/.cache}/opencode/cleanup-bng
 
 ## OpenCode 2.3.0 notes
 
-OpenCode 2.3.0 runs subagents in the background. Scripted `opencode run` calls (`doit`) were not re-verified to wait for background subagents to report before exiting; for tasks that fan out, prefer `doit -i` or check the session afterwards. These helpers use the current `opencode run` flags:
+OpenCode 2.3.0 runs subagents in the background. Verified: `opencode run` (and so `doit`) keeps running while background subagents work (it emits a `background_wait` event), wakes the parent when they report, and exits after the final answer. The transcript can show an intermediate "launched, waiting" message before the final one, and `--format json` consumers see every `text` event. These helpers use the current `opencode run` flags:
 
 - `--archived` for scripted sessions.
 - `--auto` instead of the old `--dangerously-skip-permissions` (it approves everything not explicitly denied).
