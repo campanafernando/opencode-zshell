@@ -160,13 +160,17 @@ ${XDG_CACHE_HOME:-$HOME/.cache}/opencode/cleanup-doit
 ${XDG_CACHE_HOME:-$HOME/.cache}/opencode/cleanup-bng
 ```
 
-## OpenCode 2.3.0 notes
+## OpenCode 2.3 notes
 
 OpenCode 2.3.0 runs subagents in the background. Verified: `opencode run` (and so `doit`) keeps running while background subagents work (it emits a `background_wait` event), wakes the parent when they report, and exits after the final answer. The transcript can show an intermediate "launched, waiting" message before the final one, and `--format json` consumers see every `text` event. These helpers use the current `opencode run` flags:
 
 - `--archived` for scripted sessions.
 - `--auto` instead of the old `--dangerously-skip-permissions` (it approves everything not explicitly denied).
 - `--format json` for `cmg`/`bng`.
+
+Re-checked on 2.3.2: `run --format json` still emits `text` events as
+`{ type: "text", part: { text } }`, which is the shape `cmg`/`bng` parse, and
+`--archived`, `--title`, `--file`, `--format`, `-m` and `--auto` all still exist.
 
 They no longer use the removed/legacy V1 flags `--pure`, `--interactive`, or `--dir`. Directory changes are done with a subshell `cd`, and `doit -i` opens the TUI with the task prompt.
 
