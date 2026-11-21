@@ -14,11 +14,12 @@ fi
 # refuses `init` and `mcp add`, which must be typed in a terminal.
 _fefo_cli() {
   local cli="${FEFO_CLI:-}"
+  [[ "$cli" == "fefo" ]] && cli=""
   if [[ -z "$cli" ]]; then
     if [[ -x "$PWD/bin/fefo" ]]; then
       cli="$PWD/bin/fefo"
-    elif command -v fefo >/dev/null 2>&1; then
-      cli="$(command -v fefo)"
+    elif cli="$(whence -p fefo 2>/dev/null)"; then
+      :
     elif [[ -x "$HOME/FEFO/bin/fefo" ]]; then
       cli="$HOME/FEFO/bin/fefo"
     fi
